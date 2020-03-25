@@ -5,7 +5,9 @@
 #include <iostream>
 #include <cstdlib>
 
+static int *pPlacar;
 static int placarMaximo;
+
 using namespace std;
 using namespace cv;
 
@@ -20,6 +22,9 @@ int velocidadex();
 int velocidadey();
 
 int menu();
+
+void writeoroni();
+void readoroni();
 
 string cascadeName;
 string nestedCascadeName;
@@ -61,6 +66,7 @@ void drawTransparency2(Mat frame, Mat transp, int xPosi, int yPosi) {
 
 int main( int argc, const char** argv )
 {
+    pPlacar = &placarMaximo;
     VideoCapture capture;
     Mat frame, image;
     string inputName;
@@ -93,6 +99,7 @@ int main( int argc, const char** argv )
     if( capture.isOpened() )
     {
         cout << "Video capturing has been started ..." << endl;
+        readoroni();
         int resposta = menu();
         switch (resposta) {
             case 1:
@@ -108,6 +115,7 @@ int main( int argc, const char** argv )
 
                     char c = (char)waitKey(10);
                     if( c == 27 || c == 'q' || c == 'Q' ){
+                        writeoroni();
                         break;
                     }
                 }
@@ -338,35 +346,26 @@ int menu()
     return valor;
 }
 
-int readoroni(){
+void readoroni(){
     // Leitura de arquivo para a variável recorde
-    int *valor_do_record = 0;
     FILE *fp;
     
-    fp = fopen("file.txt", "a");
+    fp = fopen("file.txt", "r");
     if(fp == NULL){
         puts("ERRO AO ABRIR fp.");
-        return 0;
     }else{
-        fscanf(fp, "%d%*c", valor_do_record);
+        fscanf(fp, "%d%*c", pPlacar);
     }
     
     fclose(fp);
-    
-    return *valor_do_record;
 }
 
 void writeoroni(){
     //Escrita de arquivo para a variável recorde
         FILE *fp;
     
-        fp = fopen("file.txt", "w");
+        fp = fopen("file.txt", "w+r");
     
         if (fp == NULL) puts("Erro ao abrir FP.");
         else fprintf(fp, "%d", placarMaximo);
 }
-
-//readoroni
-//writeoroni
-//menu
-//testar writeoroni e readoroni em cima do record que já está sendo contabilizado na static
