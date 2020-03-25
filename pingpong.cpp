@@ -19,6 +19,8 @@ void Bolinha(Mat& img, CascadeClassifier& cascade,
 int velocidadex();
 int velocidadey();
 
+int menu();
+
 string cascadeName;
 string nestedCascadeName;
 Mat fruta;
@@ -27,8 +29,7 @@ Mat fruta;
  * @brief Draws a transparent image over a frame Mat.
  *
  * @param frame the frame where the transparent image will be drawn
- * @param transp the Mat image with transparency, read from a PNG image, with the IMREAD_UNCHANGED flag
- * @param xPosi
+ * @param transp the Mat image with transparency, read from a PNG image, with the IMREAD_UNCHANGED
    @param yPosi position of the frame image where the image will start. y position of the frame image where the image will start.
  */
 void drawTransparency(Mat frame, Mat transp, int xPosi, int yPosi) {
@@ -92,30 +93,32 @@ int main( int argc, const char** argv )
     if( capture.isOpened() )
     {
         cout << "Video capturing has been started ..." << endl;
-        printf("Seja bem-vindo ao game!\n");
-        printf("Aperte 1 para jogar ou 2 para sair!\n");
-        // Leitura de arquivo para a variável newplacar
-        /*fp = fopen("file.txt", "a");
-        if(fp == NULL){
-            puts("ERRO AO ABRIR fp.");
-            return 0;
-        }*/
-        printf("RECORD: %d\n", placarMaximo);//sprintf(str,"PLAYER1:%d   PLAYER2:%d  RECORD:%d",placar1, placar2,newplacar);
+        int resposta = menu();
+        switch (resposta) {
+            case 1:
+                for(;;)
+                {
+                    capture >> frame;
+                    flip(frame, frame,1);
+                    if( frame.empty() )
+                        break;
 
-        for(;;)
-        {
-            capture >> frame;
-            flip(frame, frame,1);
-            if( frame.empty() )
+                    //Mat frame1 = frame.clone();
+                    detectAndDraw( frame, cascade, nestedCascade, scale);
+
+                    char c = (char)waitKey(10);
+                    if( c == 27 || c == 'q' || c == 'Q' ){
+                        break;
+                    }
+                }
                 break;
-
-            //Mat frame1 = frame.clone();
-            detectAndDraw( frame, cascade, nestedCascade, scale);
-
-            char c = (char)waitKey(10);
-            if( c == 27 || c == 'q' || c == 'Q' ){
+            case 2:
+                // Chamar funcao para gravar os dados
+                printf("Obrigado por jogar o nosso jogo");
+                return 0;
+            default:
+                
                 break;
-            }
         }
     }
 
@@ -323,3 +326,47 @@ void detectAndDraw( Mat& img, CascadeClassifier& cascade,
         }
     }
 }
+
+int menu()
+{
+    int valor;
+    printf("Seja bem-vindo ao game!\n");
+    printf("Aperte 1 para jogar ou 2 para sair: ");
+    
+    cin >> valor;
+    
+    return valor;
+}
+
+int readoroni(){
+    // Leitura de arquivo para a variável recorde
+    int *valor_do_record = 0;
+    FILE *fp;
+    
+    fp = fopen("file.txt", "a");
+    if(fp == NULL){
+        puts("ERRO AO ABRIR fp.");
+        return 0;
+    }else{
+        fscanf(fp, "%d%*c", valor_do_record);
+    }
+    
+    fclose(fp);
+    
+    return *valor_do_record;
+}
+
+void writeoroni(){
+    //Escrita de arquivo para a variável recorde
+        FILE *fp;
+    
+        fp = fopen("file.txt", "w");
+    
+        if (fp == NULL) puts("Erro ao abrir FP.");
+        else fprintf(fp, "%d", placarMaximo);
+}
+
+//readoroni
+//writeoroni
+//menu
+//testar writeoroni e readoroni em cima do record que já está sendo contabilizado na static
