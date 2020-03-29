@@ -1,12 +1,13 @@
-#include "opencv4/opencv2/objdetect.hpp"
-#include "opencv4/opencv2/highgui.hpp"
-#include "opencv4/opencv2/imgproc.hpp"
-#include "opencv4/opencv2/videoio.hpp"
+#include "opencv2/objdetect.hpp"
+#include "opencv2/highgui.hpp"
+#include "opencv2/imgproc.hpp"
+#include "opencv2/videoio.hpp"
 #include <iostream>
 #include <cstdlib>
 
 static int *pPlacar;
 static int placarMaximo;
+static int bateu = 0;
 
 using namespace std;
 using namespace cv;
@@ -15,13 +16,17 @@ void detectAndDraw( Mat& img, CascadeClassifier& cascade,
                     CascadeClassifier& nestedCascade,
                     double scale);
 
-void Bolinha(Mat& img, CascadeClassifier& cascade,
-                    double scale);
 
 int velocidadex();
 int velocidadey();
 
-int menu();
+void menu(Mat& img, CascadeClassifier& cascade,
+                    CascadeClassifier& nestedCascade,
+                    double scale);
+
+void menuFinal(Mat& img, CascadeClassifier& cascade,
+                    CascadeClassifier& nestedCascade,
+                    double scale);
 
 void writeoroni();
 void readoroni();
@@ -72,12 +77,8 @@ int main( int argc, const char** argv )
     string inputName;
     CascadeClassifier cascade, nestedCascade;
     double scale = 1;
-    
-    fruta = cv::imread("laranja.png", IMREAD_UNCHANGED);
-    if (fruta.empty())
-        printf("Error opening file pong.pn\n");
 
-    string folder = "/Users/edglaybarros/Documents/opencv-4.2.0/data/haarcascades/";
+    string folder = "/home/beto/Downloads/opencv-4.1.2/data/haarcascades/";
     cascadeName = folder + "haarcascade_frontalface_alt.xml";
     nestedCascadeName = folder + "haarcascade_eye_tree_eyeglasses.xml";
     inputName = "/dev/video0";
@@ -100,9 +101,20 @@ int main( int argc, const char** argv )
     {
         cout << "Video capturing has been started ..." << endl;
         readoroni();
-        int resposta = menu();
-        switch (resposta) {
-            case 1:
+       char c, ch;
+                for(;;){
+                capture >> frame;
+                    flip(frame, frame,1);
+                    if( frame.empty() )
+                        break;
+                
+                menu(frame, cascade, nestedCascade, scale);
+                c = (char)waitKey(10);
+                if(c == 13 || c == 'q' || c == 'Q' || c == 27)
+                break;
+                }
+
+                if(c == 13){
                 for(;;)
                 {
                     capture >> frame;
@@ -113,21 +125,30 @@ int main( int argc, const char** argv )
                     //Mat frame1 = frame.clone();
                     detectAndDraw( frame, cascade, nestedCascade, scale);
 
-                    char c = (char)waitKey(10);
-                    if( c == 27 || c == 'q' || c == 'Q' ){
-                        writeoroni();
+                    ch = (char)waitKey(10);
+                    if( ch == 13 || ch == 'q' || ch == 'Q' ){
+                        
+                        for(;;){
+                            //Menu final do jogo
+                            capture >> frame;
+                            flip(frame, frame,1);
+                            if( frame.empty() )
+                            break;
+
+                            menuFinal(frame, cascade, nestedCascade, scale);
+                            
+                            char cha = (char)waitKey(10);
+                            
+                            if( cha == 13 || cha == 'q' || cha == 'Q' ){
+                            writeoroni();
+                            break;
+                            }
+                        }
+
                         break;
                     }
                 }
-                break;
-            case 2:
-                // Chamar funcao para gravar os dados
-                printf("Obrigado por jogar o nosso jogo");
-                return 0;
-            default:
-                
-                break;
-        }
+                }
     }
 
     return 0;
@@ -135,9 +156,9 @@ int main( int argc, const char** argv )
 
 
 int velocidadex(){
-    int spd, randito = rand() % 5;
+    int spd;
 
-    switch(randito){
+    switch(rand() % 5){
         case 0:
             spd = 6;
             break;
@@ -162,9 +183,9 @@ int velocidadex(){
 }
 
 int velocidadey(){
-    int spd, randito = rand() % 4;
+    int spd;
 
-    switch(randito){
+    switch(rand() % 4){
         case 0:
             spd = 3;
             break;
@@ -211,7 +232,6 @@ void detectAndDraw( Mat& img, CascadeClassifier& cascade,
     resize( gray, smallImg, Size(), fx, fx, INTER_LINEAR_EXACT );
     equalizeHist( smallImg, smallImg );
 
-    t = (double)getTickCount();
     cascade.detectMultiScale( smallImg, faces,
         1.2, 2, 0
         //|CASCADE_FIND_BIGGEST_OBJECT
@@ -219,13 +239,6 @@ void detectAndDraw( Mat& img, CascadeClassifier& cascade,
         |CASCADE_SCALE_IMAGE,
         Size(30, 30) );
 
-    frames++;
-
-    //f (frames % 30 == 0)
-        //system("mplayer /usr/lib/libreoffice/share/gallery/sounds/kling.wav &");
-
-    t = (double)getTickCount() - t;
-//    printf( "detection time = %g ms\n", t*1000/getTickFrequency());
     for ( size_t i = 0; i < faces.size(); i++ )
     {
         Scalar color = colors[i%8];
@@ -245,7 +258,7 @@ void detectAndDraw( Mat& img, CascadeClassifier& cascade,
 
     static int xPos = 310, yPos = 230;
     static int xSpd = velocidadex(), yspd = velocidadey();
-
+    //Bolinha inicializada e velocidade aleatoria escolhida
 
     static Point pos;
     static int placar1 = 0, placar2 = 0;
@@ -253,6 +266,9 @@ void detectAndDraw( Mat& img, CascadeClassifier& cascade,
         xPos = 310;
         yPos = 230;
         placar1++;
+
+        //Gol, a bolinha vai voltar ao meio e tocara o som
+        system("mplayer ding-sound-effect_2.mp3 &");
 
         xSpd = velocidadex();
         yspd = velocidadey();
@@ -263,61 +279,78 @@ void detectAndDraw( Mat& img, CascadeClassifier& cascade,
         xPos = 310;
         yPos = 230;
         placar2++;
+
+        system("mplayer ding-sound-effect_2.mp3 &");
+
         xSpd = velocidadex();
         yspd = velocidadey();
     }
     
-    if(placar1 > placarMaximo) placarMaximo = placar1;
-    else if(placar2 > placarMaximo) placarMaximo = placar2;
-            
+    if(placar1 > placarMaximo){
+         placarMaximo = placar1;
+         bateu = 1;
+         //o recorde foi batido
+    }
+    else if(placar2 > placarMaximo){
+         placarMaximo = placar2;
+         bateu = 1;
+    }    
     if(yPos > 460 || yPos < 20){
+            //a bolinha chegou na parte de cima ou de baixo
            yspd = - yspd;
     }
     
     xPos+=xSpd;
     yPos+=yspd;
+    //posicao atualizada de acordo com a velocidade
  
     pos.x = xPos;
     pos.y = yPos;
     
-    //printf("%d, %d, %d, %d", xPos, yPos, pos.x, pos.y);
 
     circle( img, pos, 20, Scalar(255,255,0), -1, 8, 0 );
 
     char str[40];
-    sprintf(str,"Player 1:%d    Player 2:%d  Record:%d",placar1, placar2, placarMaximo);
+    sprintf(str,"Player 1:%d             Player 2:%d",placar1, placar2);
     cv::putText(img, //target image
         str, //text
-        cv::Point(70, 50), //top-left position
+        cv::Point(40, 50), //top-left position
         cv::FONT_HERSHEY_DUPLEX,
-        2.0,
+        1.0,
         CV_RGB(255, 255, 255), //font color
-        3);
+        2.5);
 
     imshow( "result", img );
-    const int margem = 8;
+    const int margem = 9;
+    const int margem2 = 5;
 
     for (size_t i = 0; i < faces.size(); i++){
         Rect r = faces[i];
         if((xPos - 15 > cvRound(r.x) && xPos < cvRound(r.x) + cvRound(r.width))
         && ((yPos + 20 < cvRound(r.y) + margem) && (yPos + 20 > cvRound(r.y) - margem))){
             //a bolinha vem de cima para baixo
+            
             if(yspd > 0){
             xSpd = -xSpd;
             yspd = -yspd;
+            }else if((xPos - 15 > cvRound(r.x) && xPos < cvRound(r.x) + cvRound(r.width))
+            && ((yPos + 20 < cvRound(r.y) + margem2) && (yPos + 20 > cvRound(r.y) - margem2))
+            && yspd < 0){
+            xSpd = -xSpd;
             }
 
         }else if((xPos - 15 > cvRound(r.x) && xPos < cvRound(r.x) + cvRound(r.width))
         && ((yPos - 20 < cvRound(r.y) + cvRound(r.height) + margem) && (yPos - 20 > cvRound(r.y) + cvRound(r.height) - margem))){
-            //a bolinha vem de baixo para cima
+            //lado de baixo do quadrado
             if(yspd < 0){
-            xSpd = -xSpd;
+            xSpd = -xSpd;//se a bolinha vier de baixo para cima
             yspd = -yspd;
+            }else if((xPos - 15 > cvRound(r.x) && xPos < cvRound(r.x) + cvRound(r.width))
+            && ((yPos - 20 < cvRound(r.y) + cvRound(r.height) + margem2) && (yPos - 20 > cvRound(r.y) + cvRound(r.height) - margem2))
+            && yspd > 0){
+            xSpd = -xSpd;//se a bolinha estiver indo para baixo
             }
-            
         }
-          
-          printf("%d  %d  %d  %d", r.x, r.y, r.width, r.height);
 
         if((yPos + 20 > cvRound(r.y) && yPos - 20 < cvRound(r.y) + cvRound(r.height))
          && ((xPos + 20 < cvRound(r.x) + margem) && (xPos + 20 > cvRound(r.x) - margem))){
@@ -335,17 +368,85 @@ void detectAndDraw( Mat& img, CascadeClassifier& cascade,
     }
 }
 
-int menu()
+void menu(Mat& img, CascadeClassifier& cascade,
+                    CascadeClassifier& nestedCascade,
+                    double scale)
 {
-    int valor;
-    printf("Seja bem-vindo ao game!\n");
-    printf("Aperte 1 para jogar ou 2 para sair: ");
+    //Menu inicial do jogo
+    char str[40];
+    sprintf(str,"Bem-vindo ao Pong CV!");
+    cv::putText(img, //target image
+        str, //text
+        cv::Point(40, 50), //top-left position
+        cv::FONT_HERSHEY_DUPLEX,
+        1.4,
+        CV_RGB(255, 255, 255), //font color
+        3);
+
+    sprintf(str,"Aperte Enter para jogar");
+    cv::putText(img, //target image
+        str, //text
+        cv::Point(120, 150), //top-left position
+        cv::FONT_HERSHEY_DUPLEX,
+        1.0,
+        CV_RGB(255, 255, 0), //font color
+        2);
+
+    sprintf(str,"Recorde de mais pontos: %d", placarMaximo);
+    cv::putText(img, //target image
+        str, //text
+        cv::Point(100, 230), //top-left position
+        cv::FONT_HERSHEY_DUPLEX,
+        1.0,
+        CV_RGB(255, 100, 0), //font color
+        2);
+
+    cv::putText(img, //target image
+        "Aperte q ou Enter para fechar durante o jogo", //text
+        cv::Point(50, 400), //top-left position
+        cv::FONT_HERSHEY_DUPLEX,
+        0.7,
+        CV_RGB(90, 255, 0), //font color
+        2);
+
+    imshow( "result", img );
     
-    cin >> valor;
-    
-    return valor;
 }
 
+void menuFinal(Mat& img, CascadeClassifier& cascade,
+                    CascadeClassifier& nestedCascade,
+                    double scale)
+{   char str[40];
+    sprintf(str,"Obrigado por jogar Pong CV!");
+    cv::putText(img, //target image
+        str, //text
+        cv::Point(40, 200), //top-left position
+        cv::FONT_HERSHEY_DUPLEX,
+        1.2,
+        CV_RGB(255, 255, 255), //font color
+        3);
+    if(bateu){
+    sprintf(str,"Parabens! Voce bateu o recorde!");
+    cv::putText(img, //target image
+        str, //text
+        cv::Point(110, 300), //top-left position
+        cv::FONT_HERSHEY_DUPLEX,
+        0.8,
+        CV_RGB(255, 255, 255), //font color
+        2);
+
+    sprintf(str,"Novo recorde : %d", placarMaximo);
+    cv::putText(img, //target image
+        str, //text
+        cv::Point(180, 400), //top-left position
+        cv::FONT_HERSHEY_DUPLEX,
+        1.0,
+        CV_RGB(255, 255, 0), //font color
+        2);
+    }
+
+    imshow( "result", img );
+}
 void readoroni(){
     // Leitura de arquivo para a variável recorde
     FILE *fp;
