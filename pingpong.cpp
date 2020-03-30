@@ -326,29 +326,31 @@ void detectAndDraw( Mat& img, CascadeClassifier& cascade,
 
     for (size_t i = 0; i < faces.size(); i++){
         Rect r = faces[i];
-        if((xPos - 15 > cvRound(r.x) && xPos < cvRound(r.x) + cvRound(r.width))
+        if((xPos + 15 > cvRound(r.x) && xPos - 15 < cvRound(r.x) + cvRound(r.width))
         && ((yPos + 20 < cvRound(r.y) + margem) && (yPos + 20 > cvRound(r.y) - margem))){
             //a bolinha vem de cima para baixo
             
             if(yspd > 0){
             xSpd = -xSpd;
             yspd = -yspd;
-            }else if((xPos - 15 > cvRound(r.x) && xPos < cvRound(r.x) + cvRound(r.width))
+            }else if((xPos + 15 > cvRound(r.x) && xPos - 15< cvRound(r.x) + cvRound(r.width))
             && ((yPos + 20 < cvRound(r.y) + margem2) && (yPos + 20 > cvRound(r.y) - margem2))
             && yspd < 0){
             xSpd = -xSpd;
+            yPos -= 6;
             }
 
-        }else if((xPos - 15 > cvRound(r.x) && xPos < cvRound(r.x) + cvRound(r.width))
+        }else if((xPos + 15 > cvRound(r.x) && xPos - 15 < cvRound(r.x) + cvRound(r.width))
         && ((yPos - 20 < cvRound(r.y) + cvRound(r.height) + margem) && (yPos - 20 > cvRound(r.y) + cvRound(r.height) - margem))){
             //lado de baixo do quadrado
             if(yspd < 0){
             xSpd = -xSpd;//se a bolinha vier de baixo para cima
             yspd = -yspd;
-            }else if((xPos - 15 > cvRound(r.x) && xPos < cvRound(r.x) + cvRound(r.width))
+            }else if((xPos + 15 > cvRound(r.x) && xPos - 15< cvRound(r.x) + cvRound(r.width))
             && ((yPos - 20 < cvRound(r.y) + cvRound(r.height) + margem2) && (yPos - 20 > cvRound(r.y) + cvRound(r.height) - margem2))
             && yspd > 0){
             xSpd = -xSpd;//se a bolinha estiver indo para baixo
+            yPos += 6;
             }
         }
 
